@@ -29,7 +29,7 @@ with st.container(border=True):
     # Display the inputs
     for i in range(st.session_state.num_incomes):
         with st.container(border=True):
-            st.text_input("", value="", placeholder=f"Income {i+1}", key=f'income_name_{i+1}')
+            st.text_input("label", value="", placeholder=f"Income {i+1}", key=f'income_name_{i+1}', label_visibility=False)
             st.number_input(label='Amount', min_value=0, value=10_000, key=f'income_amount_{i+1}')
             st.number_input(label='Period', min_value=0, value=5, key=f'income_period_{i+1}')
             st.number_input(label='Starting Year', min_value=0, value=2024, key=f'income_starting_year_{i+1}')
@@ -50,7 +50,7 @@ with st.container(border=True):
     # Display the inputs
     for i in range(st.session_state.num_expenses):
         with st.container(border=True):
-            st.text_input("", value="", placeholder=f"Expense {i+1}", key=f'expense_name_{i+1}')
+            st.text_input("label", value="", placeholder=f"Expense {i+1}", key=f'expense_name_{i+1}', label_visibility=False)
             st.number_input(label='Amount', min_value=0, value=10_000, key=f'expense_amount_{i+1}')
             st.number_input(label='Period', min_value=0, value=5, key=f'expense_period_{i+1}')
             st.number_input(label='Starting Year', min_value=0, value=2024, key=f'expense_starting_year_{i+1}')
@@ -75,7 +75,10 @@ def apply_incomes_and_expenses(dataframe: pd.DataFrame) -> pd.DataFrame:
             appreciation = st.session_state[f'income_appreciation_{income_idx+1}'] / 100
         )
         
+        income_name = st.session_state[f'income_name_{income_idx+1}']
+        
         dataframe = income.apply(dataframe)
+        dataframe[income_name] = income.get_amount_vector_over_timeframe(dataframe)
     
     for expense_idx in range(st.session_state.num_expenses):
         
@@ -86,14 +89,20 @@ def apply_incomes_and_expenses(dataframe: pd.DataFrame) -> pd.DataFrame:
             appreciation = st.session_state[f'expense_appreciation_{expense_idx+1}'] / 100
         )
         
+        expense_name = st.session_state[f'expense_name_{expense_idx+1}']
+        
         dataframe = expense.apply(dataframe)
+        dataframe[expense_name] = expense.get_amount_vector_over_timeframe(dataframe)
         
     return dataframe
 
-def generate(start_year: int, end_year: int, starting_amount: int) -> go.Figure:
+def generate(start_year: int, end_year: int, starting_amount: int, filter_start_year: int, filter_end_year: int) -> go.Figure:
     
     dataframe = create_dataframe(start_year, end_year, starting_amount)
     dataframe = apply_incomes_and_expenses(dataframe)
+    
+    dataframe = dataframe[(dataframe.year >= filter_start_year) & (dataframe.year <= filter_end_year)]
+    
     
     fig = go.Figure()
     
@@ -101,11 +110,37 @@ def generate(start_year: int, end_year: int, starting_amount: int) -> go.Figure:
         go.Scatter(
             x=dataframe['year'],
             y=dataframe['net_worth'],
-            mode='lines+markers'
+            mode='lines+markers',
+            name='Net Worth'
         )
     )
+    
+    for income_idx in range(st.session_state.num_incomes):
+        income_name = st.session_state[f'income_name_{income_idx+1}']
+
+        fig.add_trace(
+            go.Scatter(
+                x=dataframe['year'],
+                y=dataframe[income_name],
+                mode='lines+markers',
+                name=income_name
+            )
+        )
+        
+    for expense_idx in range(st.session_state.num_expenses):
+        expense_name = st.session_state[f'expense_name_{expense_idx+1}']
+
+        fig.add_trace(
+            go.Scatter(
+                x=dataframe['year'],
+                y=dataframe[expense_name],
+                mode='lines+markers',
+                name=expense_name
+            )
+        )
     
     return fig
 
 with st.container(border=True):
-    st.plotly_chart(generate(start_year, end_year, starting_amount))
+    filter_start_year, filter_end_year = st.slider('Filter Year Range', min_value=start_year, max_value=end_year, step=1, value=(start_year, end_year))
+    st.plotly_chart(generate(start_year, end_year, starting_amount, filter_start_year, filter_end_year))
