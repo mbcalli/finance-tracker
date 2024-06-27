@@ -24,7 +24,8 @@ with st.container(border=True):
 
 with st.container(border=True):
     
-    st.subheader('Income(s)')
+    # st.subheader('Income(s)')
+    st.markdown("### $ coming in\nIncome, investments, etc...")
     
     if 'num_incomes' not in st.session_state:
         st.session_state.num_incomes = 0
@@ -40,15 +41,16 @@ with st.container(border=True):
     # Display the inputs
     for i in range(st.session_state.num_incomes):
         with st.container(border=True):
-            st.text_input("label", value="", placeholder=f"Income {i+1}", key=f'income_name_{i+1}', label_visibility='hidden')
-            st.number_input(label='Amount', min_value=0, value=10_000, key=f'income_amount_{i+1}')
-            st.number_input(label='Period', min_value=0, value=5, key=f'income_period_{i+1}')
-            st.number_input(label='Starting Year', min_value=0, value=2024, key=f'income_starting_year_{i+1}')
-            st.number_input(label='Appreciation (%)', min_value=0, max_value=100, value=3, key=f'income_appreciation_{i+1}')
+            st.text_input("label", value=f"Income {i+1}", key=f'income_name_{i+1}', label_visibility='hidden')
+            st.number_input(label='How much per year?', min_value=0, value=10_000, key=f'income_amount_{i+1}')
+            st.number_input(label='How many years?', min_value=0, value=5, key=f'income_period_{i+1}')
+            st.number_input(label='What year will it start?', min_value=0, value=2024, key=f'income_starting_year_{i+1}')
+            st.number_input(label='How much will it appreciate per year? (%)', min_value=0, max_value=100, value=3, key=f'income_appreciation_{i+1}')
             
 with st.container(border=True):
     
-    st.subheader('Expense(s)')
+    # st.subheader('Expense(s)')
+    st.markdown("### $ going out\nExpenses, mortgages, debts, etc...")
     
     if 'num_expenses' not in st.session_state:
         st.session_state.num_expenses = 0
@@ -64,11 +66,11 @@ with st.container(border=True):
     # Display the inputs
     for i in range(st.session_state.num_expenses):
         with st.container(border=True):
-            st.text_input("label", value="", placeholder=f"Expense {i+1}", key=f'expense_name_{i+1}', label_visibility='hidden')
-            st.number_input(label='Amount', min_value=0, value=10_000, key=f'expense_amount_{i+1}')
-            st.number_input(label='Period', min_value=0, value=5, key=f'expense_period_{i+1}')
-            st.number_input(label='Starting Year', min_value=0, value=2024, key=f'expense_starting_year_{i+1}')
-            st.number_input(label='Appreciation (%)', min_value=0, max_value=100, value=3, key=f'expense_appreciation_{i+1}')
+            st.text_input("label", value=f"Expense {i+1}", key=f'expense_name_{i+1}', label_visibility='hidden')
+            st.number_input(label='How much per year?', min_value=0, value=10_000, key=f'expense_amount_{i+1}')
+            st.number_input(label='How many years?', min_value=0, value=5, key=f'expense_period_{i+1}')
+            st.number_input(label='What year will it start?', min_value=0, value=2024, key=f'expense_starting_year_{i+1}')
+            st.number_input(label='How much will it appreciate per year? (%)', min_value=0, max_value=100, value=3, key=f'expense_appreciation_{i+1}')
          
 def create_dataframe(start_year: int, end_year: int, starting_amount: int) -> pd.DataFrame:
     years = np.arange(start_year, end_year+1)
