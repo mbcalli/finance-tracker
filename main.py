@@ -29,7 +29,7 @@ with st.container(border=True):
     # Display the inputs
     for i in range(st.session_state.num_incomes):
         with st.container(border=True):
-            st.text_input("label", value="", placeholder=f"Income {i+1}", key=f'income_name_{i+1}', label_visibility=False)
+            st.text_input("label", value="", placeholder=f"Income {i+1}", key=f'income_name_{i+1}', label_visibility='hidden')
             st.number_input(label='Amount', min_value=0, value=10_000, key=f'income_amount_{i+1}')
             st.number_input(label='Period', min_value=0, value=5, key=f'income_period_{i+1}')
             st.number_input(label='Starting Year', min_value=0, value=2024, key=f'income_starting_year_{i+1}')
@@ -50,7 +50,7 @@ with st.container(border=True):
     # Display the inputs
     for i in range(st.session_state.num_expenses):
         with st.container(border=True):
-            st.text_input("label", value="", placeholder=f"Expense {i+1}", key=f'expense_name_{i+1}', label_visibility=False)
+            st.text_input("label", value="", placeholder=f"Expense {i+1}", key=f'expense_name_{i+1}', label_visibility='hidden')
             st.number_input(label='Amount', min_value=0, value=10_000, key=f'expense_amount_{i+1}')
             st.number_input(label='Period', min_value=0, value=5, key=f'expense_period_{i+1}')
             st.number_input(label='Starting Year', min_value=0, value=2024, key=f'expense_starting_year_{i+1}')
