@@ -42,10 +42,12 @@ with st.container(border=True):
     for i in range(st.session_state.num_incomes):
         with st.container(border=True):
             st.text_input("label", value=f"Income {i+1}", key=f'income_name_{i+1}', label_visibility='hidden')
-            st.number_input(label='How much per year?', min_value=0, value=10_000, key=f'income_amount_{i+1}')
-            st.number_input(label='How many years?', min_value=0, value=5, key=f'income_period_{i+1}')
-            st.number_input(label='What year will it start?', min_value=0, value=2024, key=f'income_starting_year_{i+1}')
-            st.number_input(label='How much will it appreciate per year? (%)', min_value=0, max_value=100, value=3, key=f'income_appreciation_{i+1}')
+            income_monthly = st.toggle("Monthly", value=False, key=f'income_monthly_{i+1}')
+            income_frequency = 'month' if income_monthly else 'year'
+            st.number_input(label=f'How much per {income_frequency}?', min_value=0, value=10_000, key=f'income_amount_{i+1}')
+            st.number_input(label=f'How many years?', min_value=0, value=5, key=f'income_period_{i+1}')
+            st.number_input(label=f'What year will it start?', min_value=0, value=2024, key=f'income_starting_year_{i+1}')
+            st.number_input(label=f'How much will it appreciate per year? (%)', min_value=0, max_value=100, value=3, key=f'income_appreciation_{i+1}')
             
 with st.container(border=True):
     
@@ -67,10 +69,12 @@ with st.container(border=True):
     for i in range(st.session_state.num_expenses):
         with st.container(border=True):
             st.text_input("label", value=f"Expense {i+1}", key=f'expense_name_{i+1}', label_visibility='hidden')
-            st.number_input(label='How much per year?', min_value=0, value=10_000, key=f'expense_amount_{i+1}')
-            st.number_input(label='How many years?', min_value=0, value=5, key=f'expense_period_{i+1}')
-            st.number_input(label='What year will it start?', min_value=0, value=2024, key=f'expense_starting_year_{i+1}')
-            st.number_input(label='How much will it appreciate per year? (%)', min_value=0, max_value=100, value=3, key=f'expense_appreciation_{i+1}')
+            expense_monthly = st.toggle("Monthly", value=False, key=f'expense_monthly_{i+1}')
+            expense_frequency = 'month' if expense_monthly else 'year'
+            st.number_input(label=f'How much per {expense_frequency}?', min_value=0, value=10_000, key=f'expense_amount_{i+1}')
+            st.number_input(label=f'How many years?', min_value=0, value=5, key=f'expense_period_{i+1}')
+            st.number_input(label=f'What year will it start?', min_value=0, value=2024, key=f'expense_starting_year_{i+1}')
+            st.number_input(label=f'How much will it appreciate per year? (%)', min_value=0, max_value=100, value=3, key=f'expense_appreciation_{i+1}')
          
 def create_dataframe(start_year: int, end_year: int, starting_amount: int) -> pd.DataFrame:
     years = np.arange(start_year, end_year+1)
@@ -84,8 +88,10 @@ def apply_incomes_and_expenses(dataframe: pd.DataFrame) -> pd.DataFrame:
     
     for income_idx in range(st.session_state.num_incomes):
         
+        frequency_factor = 1 if st.session_state[f'income_name_{i+1}'] == False else 12
+        
         income = Income(
-            amount = st.session_state[f'income_amount_{income_idx+1}'],
+            amount = frequency_factor * st.session_state[f'income_amount_{income_idx+1}'],
             period = st.session_state[f'income_period_{income_idx+1}'],
             starting_year = st.session_state[f'income_starting_year_{income_idx+1}'],
             appreciation = st.session_state[f'income_appreciation_{income_idx+1}'] / 100
@@ -98,8 +104,10 @@ def apply_incomes_and_expenses(dataframe: pd.DataFrame) -> pd.DataFrame:
     
     for expense_idx in range(st.session_state.num_expenses):
         
+        frequency_factor = 1 if st.session_state[f'expense_name_{i+1}'] == False else 12
+        
         expense = Expense(
-            amount = st.session_state[f'expense_amount_{expense_idx+1}'],
+            amount = frequency_factor * st.session_state[f'expense_amount_{expense_idx+1}'],
             period = st.session_state[f'expense_period_{expense_idx+1}'],
             starting_year = st.session_state[f'expense_starting_year_{expense_idx+1}'],
             appreciation = st.session_state[f'expense_appreciation_{expense_idx+1}'] / 100
