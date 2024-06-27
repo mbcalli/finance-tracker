@@ -8,13 +8,24 @@ import streamlit as st
 
 from finance import Income, Expense
 
-st.set_page_config(layout="wide")
-st.title('Finance Projection')
-
-starting_amount = st.number_input('Current Amount', min_value=0, value=10_000, step=1_000)
-start_year, end_year = st.slider('Year Range', min_value=2000, max_value=2100, step=1, value=(2024, 2065))
+# st.set_page_config(layout="wide")
+st.title('finance-tracker')
 
 with st.container(border=True):
+    st.subheader('About')
+    st.markdown("Welcome to my version of a financial events tracker. I created this tool after I realized that my financial situation doesn't fit the cookie cutter mold that most advisors use. I wanted a tool that could handle future events, so I developed `financial-tracker`. I hope to add more complexity to the tool, but right now it supports variable incomes and expenses. Keep an eye out for investments in the future. [github](https://github.com/mbcalli)")
+
+with st.container(border=True):
+    
+    st.subheader('Parameters')
+    
+    starting_amount = st.number_input('Current Net Worth', min_value=0, value=10_000, step=1_000)
+    start_year, end_year = st.slider('Year Range', min_value=2000, max_value=2100, step=1, value=(2024, 2065))
+
+with st.container(border=True):
+    
+    st.subheader('Income(s)')
+    
     if 'num_incomes' not in st.session_state:
         st.session_state.num_incomes = 0
 
@@ -23,7 +34,7 @@ with st.container(border=True):
         st.session_state.num_incomes += 1
 
     # Button to add more inputs
-    if st.button('Add income'):
+    if st.button('➕', key='add_income'):
         add_income()
 
     # Display the inputs
@@ -36,6 +47,9 @@ with st.container(border=True):
             st.number_input(label='Appreciation (%)', min_value=0, max_value=100, value=3, key=f'income_appreciation_{i+1}')
             
 with st.container(border=True):
+    
+    st.subheader('Expense(s)')
+    
     if 'num_expenses' not in st.session_state:
         st.session_state.num_expenses = 0
 
@@ -44,7 +58,7 @@ with st.container(border=True):
         st.session_state.num_expenses += 1
 
     # Button to add more inputs
-    if st.button('Add expense'):
+    if st.button('➕', key='add_expense'):
         add_expense()
 
     # Display the inputs
@@ -138,9 +152,21 @@ def generate(start_year: int, end_year: int, starting_amount: int, filter_start_
                 name=expense_name
             )
         )
+        
+    fig.update_layout(
+        xaxis=dict(
+            title='Year'
+        ),
+        yaxis=dict(
+            title='Net Worth ($)'
+        )
+    )
     
     return fig
 
 with st.container(border=True):
+    
+    st.subheader('Forecast')
+    
     filter_start_year, filter_end_year = st.slider('Filter Year Range', min_value=start_year, max_value=end_year, step=1, value=(start_year, end_year))
     st.plotly_chart(generate(start_year, end_year, starting_amount, filter_start_year, filter_end_year))
