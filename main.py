@@ -48,6 +48,7 @@ with st.container(border=True):
             st.number_input(label=f'How many years?', min_value=0, value=5, key=f'income_period_{i+1}')
             st.number_input(label=f'What year will it start?', min_value=0, value=2024, key=f'income_starting_year_{i+1}')
             st.number_input(label=f'How much will it appreciate per year? (%)', min_value=0, max_value=100, value=3, key=f'income_appreciation_{i+1}')
+                
             
 with st.container(border=True):
     
