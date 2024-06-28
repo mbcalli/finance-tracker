@@ -6,7 +6,7 @@ import seaborn as sns
 import plotly.graph_objects as go
 import streamlit as st
 
-from finance import Income, Expense
+from finance import Income, Expense, Recession, UnexpectedLifeEvent
 
 # st.set_page_config(layout="wide")
 st.title('finance-tracker')
@@ -76,7 +76,57 @@ with st.container(border=True):
             st.number_input(label=f'How many years?', min_value=0, value=5, key=f'expense_period_{i+1}')
             st.number_input(label=f'What year will it start?', min_value=0, value=2024, key=f'expense_starting_year_{i+1}')
             st.number_input(label=f'How much will it appreciate per year? (%)', min_value=0, max_value=100, value=3, key=f'expense_appreciation_{i+1}')
-         
+            
+with st.container(border=True):
+    
+    # st.subheader('Recession(s)')
+    st.markdown("### Recessions\nSimulate recessions")
+    
+    if 'num_recessions' not in st.session_state:
+        st.session_state.num_recessions = 0
+
+    # Function to add more recessions
+    def add_recession():
+        st.session_state.num_recessions += 1
+
+    # Button to add more inputs
+    if st.button('➕', key='add_recession'):
+        add_recession()
+
+    # Display the inputs
+    for i in range(st.session_state.num_recessions):
+        with st.container(border=True):
+            st.text_input("label", value=f"Recession {i+1}", key=f'recession_name_{i+1}', label_visibility='hidden')
+            recession_monthly = st.toggle("Monthly", value=False, key=f'recession_monthly_{i+1}')
+            recession_frequency = 'month' if recession_monthly else 'year'
+            st.number_input(label=f'How much per {recession_frequency}?', min_value=0, value=10_000, key=f'recession_amount_{i+1}')
+            st.number_input(label=f'How many years?', min_value=0, value=5, key=f'recession_period_{i+1}')
+            st.number_input(label=f'What year will it start?', min_value=0, value=2024, key=f'recession_starting_year_{i+1}')
+
+with st.container(border=True):
+    
+    # st.subheader('Life_event(s)')
+    st.markdown("### Unexpected Life Events\nNatural disasters, medical events, etc.")
+    
+    if 'num_life_events' not in st.session_state:
+        st.session_state.num_life_events = 0
+
+    # Function to add more life_events
+    def add_life_event():
+        st.session_state.num_life_events += 1
+
+    # Button to add more inputs
+    if st.button('➕', key='add_life_event'):
+        add_life_event()
+
+    # Display the inputs
+    for i in range(st.session_state.num_life_events):
+        with st.container(border=True):
+            st.text_input("label", value=f"Life Event {i+1}", key=f'life_event_name_{i+1}', label_visibility='hidden')
+            st.number_input(label=f'How much per event?', min_value=0, value=10_000, key=f'life_event_amount_{i+1}')
+            st.toggle(label=f'Randomize amount per event', value=False, key=f'life_event_randomize_amount_{i+1}')
+            st.number_input(label=f'How many events?', min_value=0, value=1, key=f'life_event_number_{i+1}')
+            
 def create_dataframe(start_year: int, end_year: int, starting_amount: int) -> pd.DataFrame:
     years = np.arange(start_year, end_year+1)
     net_worth = starting_amount * np.ones(len(years))
@@ -118,7 +168,39 @@ def apply_incomes_and_expenses(dataframe: pd.DataFrame) -> pd.DataFrame:
         
         dataframe = expense.apply(dataframe)
         dataframe[expense_name] = expense.get_amount_vector_over_timeframe(dataframe)
+    
+    for recession_idx in range(st.session_state.num_recessions):
         
+        frequency_factor = 1 if st.session_state[f'recession_name_{i+1}'] == False else 12
+        
+        recession = Recession(
+            amount = frequency_factor * st.session_state[f'recession_amount_{recession_idx+1}'],
+            period = st.session_state[f'recession_period_{recession_idx+1}'],
+            starting_year = st.session_state[f'recession_starting_year_{recession_idx+1}']
+        )
+        
+        recession_name = st.session_state[f'recession_name_{recession_idx+1}']
+        
+        dataframe = recession.apply(dataframe)
+        dataframe[recession_name] = recession.get_amount_vector_over_timeframe(dataframe)
+        
+    for life_event_idx in range(st.session_state.num_life_events):
+        
+        frequency_factor = 1 if st.session_state[f'life_event_name_{i+1}'] == False else 12
+        
+        life_event = UnexpectedLifeEvent(
+            amount = frequency_factor * st.session_state[f'life_event_amount_{life_event_idx+1}'],
+            starting_year = start_year,
+            ending_year = end_year,
+            randomize_amount= st.session_state[f'life_event_randomize_amount_{life_event_idx+1}'],
+            n_events = st.session_state[f'life_event_number_{i+1}']
+        )
+        
+        life_event_name = st.session_state[f'life_event_name_{life_event_idx+1}']
+        
+        dataframe = life_event.apply(dataframe)
+        dataframe[life_event_name] = life_event.get_amount_vector_over_timeframe(dataframe)
+      
     return dataframe
 
 def generate(start_year: int, end_year: int, starting_amount: int, filter_start_year: int, filter_end_year: int) -> go.Figure:
@@ -161,6 +243,30 @@ def generate(start_year: int, end_year: int, starting_amount: int, filter_start_
                 y=dataframe[expense_name],
                 mode='lines+markers',
                 name=expense_name
+            )
+        )
+        
+    for recession_idx in range(st.session_state.num_recessions):
+        recession_name = st.session_state[f'recession_name_{recession_idx+1}']
+
+        fig.add_trace(
+            go.Scatter(
+                x=dataframe['year'],
+                y=dataframe[recession_name],
+                mode='lines+markers',
+                name=recession_name
+            )
+        )
+    
+    for life_event_idx in range(st.session_state.num_life_events):
+        life_event_name = st.session_state[f'life_event_name_{life_event_idx+1}']
+
+        fig.add_trace(
+            go.Scatter(
+                x=dataframe['year'],
+                y=dataframe[life_event_name],
+                mode='lines+markers',
+                name=life_event_name
             )
         )
         
