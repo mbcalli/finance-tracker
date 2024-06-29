@@ -140,7 +140,7 @@ def apply_incomes_and_expenses(dataframe: pd.DataFrame) -> pd.DataFrame:
     for income_idx in range(st.session_state.num_incomes):
         
         income = Income(
-            amount = (1 if st.session_state[f'income_monthly_{i+1}'] == False else 12) * st.session_state[f'income_amount_{income_idx+1}'],
+            amount = (1 if st.session_state[f'income_monthly_{income_idx+1}'] == False else 12) * st.session_state[f'income_amount_{income_idx+1}'],
             period = st.session_state[f'income_period_{income_idx+1}'],
             starting_year = st.session_state[f'income_starting_year_{income_idx+1}'],
             appreciation = st.session_state[f'income_appreciation_{income_idx+1}'] / 100
@@ -154,7 +154,7 @@ def apply_incomes_and_expenses(dataframe: pd.DataFrame) -> pd.DataFrame:
     for expense_idx in range(st.session_state.num_expenses):
         
         expense = Expense(
-            amount = (1 if st.session_state[f'expense_monthly_{i+1}'] == False else 12) * st.session_state[f'expense_amount_{expense_idx+1}'],
+            amount = (1 if st.session_state[f'expense_monthly_{expense_idx+1}'] == False else 12) * st.session_state[f'expense_amount_{expense_idx+1}'],
             period = st.session_state[f'expense_period_{expense_idx+1}'],
             starting_year = st.session_state[f'expense_starting_year_{expense_idx+1}'],
             appreciation = st.session_state[f'expense_appreciation_{expense_idx+1}'] / 100
@@ -168,7 +168,7 @@ def apply_incomes_and_expenses(dataframe: pd.DataFrame) -> pd.DataFrame:
     for recession_idx in range(st.session_state.num_recessions):
         
         recession = Recession(
-            amount = (1 if st.session_state[f'recession_monthly_{i+1}'] == False else 12) * st.session_state[f'recession_amount_{recession_idx+1}'],
+            amount = (1 if st.session_state[f'recession_monthly_{recession_idx+1}'] == False else 12) * st.session_state[f'recession_amount_{recession_idx+1}'],
             period = st.session_state[f'recession_period_{recession_idx+1}'],
             starting_year = st.session_state[f'recession_starting_year_{recession_idx+1}']
         )
@@ -181,7 +181,7 @@ def apply_incomes_and_expenses(dataframe: pd.DataFrame) -> pd.DataFrame:
     for life_event_idx in range(st.session_state.num_life_events):
         
         life_event = UnexpectedLifeEvent(
-            amount = (1 if st.session_state[f'life_event_monthly_{i+1}'] == False else 12) * st.session_state[f'life_event_amount_{life_event_idx+1}'],
+            amount = (1 if st.session_state[f'life_event_monthly_{life_event_idx+1}'] == False else 12) * st.session_state[f'life_event_amount_{life_event_idx+1}'],
             starting_year = start_year,
             ending_year = end_year,
             randomize_amount= st.session_state[f'life_event_randomize_amount_{life_event_idx+1}'],
