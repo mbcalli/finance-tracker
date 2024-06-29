@@ -139,10 +139,12 @@ def apply_incomes_and_expenses(dataframe: pd.DataFrame) -> pd.DataFrame:
     
     for income_idx in range(st.session_state.num_incomes):
         
-        frequency_factor = 1 if st.session_state[f'income_name_{i+1}'] == False else 12
+        frequency_factor = 1 if st.session_state[f'income_monthly_{i+1}'] == False else 12
+        
+        print(frequency_factor, st.session_state[f'income_monthly_{i+1}'])
         
         income = Income(
-            amount = frequency_factor * st.session_state[f'income_monthly_{income_idx+1}'],
+            amount = frequency_factor * st.session_state[f'income_amount_{income_idx+1}'],
             period = st.session_state[f'income_period_{income_idx+1}'],
             starting_year = st.session_state[f'income_starting_year_{income_idx+1}'],
             appreciation = st.session_state[f'income_appreciation_{income_idx+1}'] / 100
