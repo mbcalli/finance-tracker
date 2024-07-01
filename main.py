@@ -181,7 +181,7 @@ def apply_incomes_and_expenses(dataframe: pd.DataFrame) -> pd.DataFrame:
     for life_event_idx in range(st.session_state.num_life_events):
         
         life_event = UnexpectedLifeEvent(
-            amount = (1 if st.session_state[f'life_event_monthly_{life_event_idx+1}'] == False else 12) * st.session_state[f'life_event_amount_{life_event_idx+1}'],
+            amount = st.session_state[f'life_event_amount_{life_event_idx+1}'],
             starting_year = start_year,
             ending_year = end_year,
             randomize_amount= st.session_state[f'life_event_randomize_amount_{life_event_idx+1}'],
