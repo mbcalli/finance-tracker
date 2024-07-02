@@ -102,7 +102,7 @@ with st.container(border=True):
 
 with st.container(border=True):
     
-    st.markdown("### Investments\nSimulate market investments, including recessions within the market")
+    st.markdown("### Market Simulations\nSimulate market investments, including recessions within the market")
     
     def add_investment():
         if st.session_state.investment_idxs:
