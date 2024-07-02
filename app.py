@@ -6,7 +6,7 @@ import seaborn as sns
 import plotly.graph_objects as go
 import streamlit as st
 
-from finance import Income, Expense, Recession, UnexpectedLifeEvent
+from finance import *
 
 # st.set_page_config(layout="wide")
 st.title('finance-tracker')
@@ -99,6 +99,47 @@ with st.container(border=True):
             st.number_input(label=f'How many years?', min_value=0, value=5, key=f'expense_period_{i}')
             st.number_input(label=f'What year will it start?', min_value=0, value=2024, key=f'expense_starting_year_{i}')
             st.number_input(label=f'How much will it appreciate per year? (%)', min_value=0, max_value=100, value=3, key=f'expense_appreciation_{i}')
+
+with st.container(border=True):
+    
+    st.markdown("### Investments\nSimulate market investments, including recessions within the market")
+    
+    def add_investment():
+        if st.session_state.investment_idxs:
+            st.session_state.investment_idxs.append(max(st.session_state.investment_idxs) + 1)
+        else:
+            st.session_state.investment_idxs = [1]
+            
+    def remove_investment():
+        st.session_state.investment_idxs = [x for x in st.session_state.investment_idxs if x != i]
+    
+    if 'investment_idxs' not in st.session_state:
+        st.session_state.investment_idxs = []
+    
+    col1, _, _, col2 = st.columns([1,1,1,1])
+    
+    with col1:
+        if st.button('➕ Add', key='add_investment'):
+            add_investment()
+    
+    with col2:
+        if st.button('🔄 Refresh', key='refresh_investment'):
+            pass
+        
+    # Display the inputs
+    for i in st.session_state.investment_idxs:
+        with st.container(border=True):
+            if st.button('➖ Remove', key=f'remove_investment_{i}'):
+                remove_investment()
+            st.text_input("Name", value=f"Investment {i}", key=f'investment_name_{i}')
+            st.number_input(label=f'How much do you start with?', min_value=0, value=10000, key=f'investment_starting_amount_{i}')
+            investment_monthly = st.toggle("Monthly", value=False, key=f'investment_monthly_{i}')
+            investment_frequency = 'month' if investment_monthly else 'year'
+            st.number_input(label=f'How much contributed per {investment_frequency}?', min_value=0, value=10_000, key=f'investment_amount_{i}')
+            st.number_input(label=f'How many years?', min_value=0, value=5, key=f'investment_period_{i}')
+            st.number_input(label=f'What year will it start?', min_value=0, value=2024, key=f'investment_starting_year_{i}')
+            st.number_input(label=f'How many recessions?', min_value=0, value=3, key=f'investment_n_recessions_{i}')
+            st.number_input(label=f'How long will recessions last?', min_value=0, value=2, key=f'investment_recession_length_{i}')
 
 with st.container(border=True):
     
@@ -212,6 +253,22 @@ def apply_incomes_and_expenses(dataframe: pd.DataFrame) -> pd.DataFrame:
         dataframe = expense.apply(dataframe)
         dataframe[expense_name] = expense.get_amount_vector_over_timeframe(dataframe)
     
+    for investment_idx in st.session_state.investment_idxs:
+        
+        investment = Investment(
+            amount = st.session_state[f'investment_starting_amount_{investment_idx}'],
+            period = st.session_state[f'investment_period_{investment_idx}'],
+            starting_year = st.session_state[f'investment_starting_year_{investment_idx}'],
+            yearly_contribution = (1 if st.session_state[f'investment_monthly_{investment_idx}'] == 'year' else 12) * st.session_state[f'investment_amount_{investment_idx}'],
+            n_recessions = st.session_state[f'investment_n_recessions_{investment_idx}'],
+            recession_length = st.session_state[f'investment_recession_length_{investment_idx}']
+        )
+        
+        investment_name = st.session_state[f'investment_name_{investment_idx}']
+        
+        dataframe = investment.apply(dataframe)
+        dataframe[investment_name] = investment.get_amount_vector_over_timeframe(dataframe)
+    
     for recession_idx in st.session_state.recession_idxs:
         
         recession = Recession(
@@ -282,6 +339,18 @@ def generate(start_year: int, end_year: int, starting_amount: int, filter_start_
                 y=dataframe[expense_name],
                 mode='lines+markers',
                 name=expense_name
+            )
+        )
+    
+    for investment_idx in st.session_state.investment_idxs:
+        investment_name = st.session_state[f'investment_name_{investment_idx}']
+
+        fig.add_trace(
+            go.Scatter(
+                x=dataframe['year'],
+                y=dataframe[investment_name],
+                mode='lines+markers',
+                name=investment_name
             )
         )
         
