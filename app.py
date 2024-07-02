@@ -9,6 +9,7 @@ import streamlit as st
 from finance import *
 
 # st.set_page_config(layout="wide")
+st.set_page_config(page_title="finance-tracker")
 st.title('finance-tracker')
 
 with st.container(border=True):
