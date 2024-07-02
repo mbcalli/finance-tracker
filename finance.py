@@ -2,6 +2,7 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
+import scipy.stats as stats
 
 class Income:
     
@@ -275,3 +276,164 @@ class UnexpectedLifeEvent:
         
         return dataframe
         
+class Laplace:
+    
+    def __init__(self, loc: float, scale: float):
+        """This class contains a nicer version of scipy stats Laplace distribution.
+
+        Args:
+            loc (float): The mean of the distribution
+            scale (float): The scale of the distribution
+        """
+        self.loc = loc
+        self.scale = scale
+        self.dist = stats.laplace(loc=self.loc, scale=self.scale)
+        
+    def get_rvs(self, n: int):
+        """Returns an array of n random variables taken from the distribution.
+
+        Args:
+            n (int): number of samples to return
+
+        Returns:
+            np.array: samples taken from distribution
+        """
+        return self.dist.rvs(n)
+    
+class Investment:
+    
+    def __init__(self, amount: float, period: int, starting_year: int, yearly_contribution: float = 0, n_recessions: int = 0, recession_length: int = 1):
+        """This class mimics the fluctuations of the stock market by taking samples of Laplace distributions to be the day-to-day gains or losses.
+        Handles recession simulations, which are taken from the 2007-2008 recession. Laplace parameters are hard-coded.
+
+        Args:
+            amount (float): starting amount of money
+            period (int): number of years
+            starting_year (int): starting year of investment
+            yearly_contribution (float, optional): amount to contribute annualy. Defaults to 0.
+            n_recessions (int, optional): number of recessions to simulate. Defaults to 0.
+            recession_length (int, optional): length of recessions. Defaults to 1 year.
+        """
+        assert (recession_length > 0) & (n_recessions >= 0)
+        
+        self.amount = amount
+        self.period = period
+        self.starting_year = starting_year
+        self.ending_year = self.starting_year + self.period
+        self.yearly_contribution = yearly_contribution
+        self.n_recessions = n_recessions
+        self.recession_length = recession_length
+        
+        if self.n_recessions > 0:
+            self.recession_starting_years = np.random.choice(np.arange(self.starting_year, self.ending_year), self.n_recessions, replace=False)
+            self.recession_ending_years = self.recession_starting_years + self.recession_length
+            self.recession_ending_years[self.recession_ending_years > self.ending_year] = self.ending_year
+        else:
+            self.recession_starting_years = []
+            self.recession_ending_years = []
+        
+        self.normal_dist = Laplace(
+            loc = np.float64(0.8999607008738539), 
+            scale = np.float64(12.997665073156822)
+        )
+        
+        self.recession_dist = Laplace(
+            loc = np.float64(-1.4800001575100807), 
+            scale = np.float64(13.99833543746421)
+        )
+        
+        self.dist_start = 5475.089844
+        
+    def get_rvs(self):
+        """Returns the random variables taken from the underlying distributions; accounts for recessions
+
+        Returns:
+            np.array: random variables
+        """
+        
+        n_days = self.period * 365
+        
+        rvs = self.normal_dist.get_rvs(n_days)
+        
+        for recession_starting_year, recession_ending_year in zip(self.recession_starting_years, self.recession_ending_years):
+            recession_starting_index = (recession_starting_year - self.starting_year) * 365
+            recession_ending_index = (recession_ending_year - self.starting_year) * 365
+            recession_rvs = self.recession_dist.get_rvs(365 * (recession_ending_year - recession_starting_year))
+            rvs[recession_starting_index:recession_ending_index] = recession_rvs
+            
+        return rvs
+    
+    def get_yearly_contribution(self):
+        n_days = self.period * 365
+        contribution = np.zeros(n_days)
+        contribution[::365] = self.yearly_contribution
+        return contribution
+    
+    def get_cumulative_yearly_contribution(self):
+        return np.cumsum(self.get_yearly_contribution())
+    
+    def get_cumulative_rvs(self):
+        """cumulatively sums rvs
+
+        Returns:
+            np.array: cumulative sum of rvs
+        """
+        return (self.dist_start + np.cumsum(self.get_rvs())) / self.dist_start
+    
+    def get_simulation(self):
+        """returns a single simulation (day-by-day)
+
+        Returns:
+            np.array: day-by-day amount of money in investment
+        """
+        return self.amount * self.get_cumulative_rvs() + self.get_cumulative_yearly_contribution()
+    
+    
+    def get_amount_vector(self):
+        """returns a single simulation (yearly)
+
+        Returns:
+            np.array: yearly amount of money in investment
+        """
+        simulation = self.get_simulation()[::365]
+        return np.concatenate((np.array([0]), np.diff(simulation)))
+        
+    def get_amount_vector_over_timeframe(self, dataframe: pd.DataFrame) -> np.array:
+        """Returns the amount vector for a given timeframe, with 0s if no investment.
+
+        Args:
+            dataframe (pd.DataFrame): Net worth dataframe
+
+        Returns:
+            np.array: Amounts over time frame
+        """
+        dataframe = dataframe.copy()
+        
+        years = dataframe['year'].to_numpy()
+        
+        amounts = np.zeros(len(years))
+                
+        starting_year_index = np.where(years == self.starting_year)[0][0]
+        
+        amounts[starting_year_index : starting_year_index + self.period] = self.get_amount_vector()
+        
+        return amounts
+    
+    def apply(self, dataframe: pd.DataFrame) -> pd.DataFrame:
+        """Takes an input net worth dataframe and applies a recession.
+
+        Args:
+            dataframe (pd.DataFrame): Net worth dataframe, with columns year and net worth.
+
+        Returns:
+            pd.DataFrame: New net worth dataframe with net worth applied
+        """
+        dataframe = dataframe.copy()
+        
+        event = self.get_amount_vector_over_timeframe(dataframe)
+        
+        cumulative_event = np.cumsum(event)
+        
+        dataframe['net_worth'] = dataframe['net_worth'] + cumulative_event
+        
+        return dataframe
