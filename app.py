@@ -143,7 +143,7 @@ with st.container(border=True):
 
 with st.container(border=True):
     
-    st.markdown("### Recessions\nSimulate Recesssions")
+    st.markdown("### Recessions\nSimulate Recesssions that directly hit net worth, e.g., increased cost of living from financial hardships")
     
     def add_recession():
         if st.session_state.recession_idxs:
