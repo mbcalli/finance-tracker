@@ -302,7 +302,7 @@ class Laplace:
     
 class Investment:
     
-    def __init__(self, amount: float, period: int, starting_year: int, yearly_contribution: float = 0, n_recessions: int = 0, recession_length: int = 1):
+    def __init__(self, amount: float, period: int, starting_year: int, yearly_contribution: float = 0, n_recessions: int = 0, recession_length: int = 1, n_simulations: int = 1):
         """This class mimics the fluctuations of the stock market by taking samples of Laplace distributions to be the day-to-day gains or losses.
         Handles recession simulations, which are taken from the 2007-2008 recession. Laplace parameters are hard-coded.
 
@@ -323,6 +323,7 @@ class Investment:
         self.yearly_contribution = yearly_contribution
         self.n_recessions = n_recessions
         self.recession_length = recession_length
+        self.n_simulations = n_simulations
         
         if self.n_recessions > 0:
             self.recession_starting_years = np.random.choice(np.arange(self.starting_year, self.ending_year), self.n_recessions, replace=False)
@@ -395,7 +396,13 @@ class Investment:
         Returns:
             np.array: yearly amount of money in investment
         """
-        simulation = self.get_simulation()[::365]
+        simulation = np.array([self.get_simulation()[::365]])
+        for _ in range(self.n_simulations - 1):
+            simulation = np.vstack((
+                simulation,
+                self.get_simulation()[::365]
+            ))
+        simulation = np.mean(simulation, axis=0)
         return np.concatenate((np.array([0]), np.diff(simulation)))
         
     def get_amount_vector_over_timeframe(self, dataframe: pd.DataFrame) -> np.array:

@@ -136,11 +136,12 @@ with st.container(border=True):
             st.number_input(label=f'How much do you start with?', min_value=0, value=10000, key=f'investment_starting_amount_{i}')
             investment_monthly = st.toggle("Monthly", value=False, key=f'investment_monthly_{i}')
             investment_frequency = 'month' if investment_monthly else 'year'
-            st.number_input(label=f'How much contributed per {investment_frequency}?', min_value=0, value=10_000, key=f'investment_amount_{i}')
+            st.number_input(label=f'How much contributed per {investment_frequency}?', min_value=0, value=0, key=f'investment_amount_{i}')
             st.number_input(label=f'How many years?', min_value=0, value=5, key=f'investment_period_{i}')
             st.number_input(label=f'What year will it start?', min_value=0, value=2024, key=f'investment_starting_year_{i}')
             st.number_input(label=f'How many recessions?', min_value=0, value=3, key=f'investment_n_recessions_{i}')
             st.number_input(label=f'How long will recessions last?', min_value=0, value=2, key=f'investment_recession_length_{i}')
+            st.number_input(label=f'How many simulations?', min_value=0, value=1, key=f'investment_n_simulations_{i}')
 
 with st.container(border=True):
     
@@ -262,7 +263,8 @@ def apply_incomes_and_expenses(dataframe: pd.DataFrame) -> pd.DataFrame:
             starting_year = st.session_state[f'investment_starting_year_{investment_idx}'],
             yearly_contribution = (1 if st.session_state[f'investment_monthly_{investment_idx}'] == 'year' else 12) * st.session_state[f'investment_amount_{investment_idx}'],
             n_recessions = st.session_state[f'investment_n_recessions_{investment_idx}'],
-            recession_length = st.session_state[f'investment_recession_length_{investment_idx}']
+            recession_length = st.session_state[f'investment_recession_length_{investment_idx}'],
+            n_simulations = st.session_state[f'investment_n_simulations_{investment_idx}']
         )
         
         investment_name = st.session_state[f'investment_name_{investment_idx}']
