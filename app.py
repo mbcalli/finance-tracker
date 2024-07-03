@@ -302,7 +302,7 @@ def apply_incomes_and_expenses(dataframe: pd.DataFrame) -> pd.DataFrame:
       
     return dataframe
 
-def generate(start_year: int, end_year: int, starting_amount: int, filter_start_year: int, filter_end_year: int) -> go.Figure:
+def generate(start_year: int, end_year: int, starting_amount: int, filter_start_year: int, filter_end_year: int) -> (go.Figure, pd.DataFrame):
     
     dataframe = create_dataframe(start_year, end_year, starting_amount)
     dataframe = apply_incomes_and_expenses(dataframe)
@@ -390,11 +390,22 @@ def generate(start_year: int, end_year: int, starting_amount: int, filter_start_
         )
     )
     
-    return fig
+    return fig, dataframe
 
 with st.container(border=True):
     
     st.subheader('Forecast')
     
     filter_start_year, filter_end_year = st.slider('Filter Year Range', min_value=start_year, max_value=end_year, step=1, value=(start_year, end_year))
-    st.plotly_chart(generate(start_year, end_year, starting_amount, filter_start_year, filter_end_year))
+    
+    plot, df = generate(start_year, end_year, starting_amount, filter_start_year, filter_end_year)
+    
+    df.columns = [x.title().replace('_', ' ') for x in df.columns]
+    style_map = {c: lambda x: '$ {:,.0f}'.format(x) for c in df.columns if c != 'Age'}
+    style_map['Year'] = lambda x : '{:.0f}'.format(x)
+    print(style_map)
+    df = df.style.format(style_map)
+    
+    st.plotly_chart(plot)
+    
+    st.dataframe(df, use_container_width=True, hide_index=True)
